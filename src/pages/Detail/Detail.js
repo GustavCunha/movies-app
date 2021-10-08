@@ -6,7 +6,10 @@ import { Modal, ScrollView } from 'react-native';
 
 import API, {key} from '../../services/api';
 import { theme } from '../../global/theme';
+import {deleteMovie, hasMovie, saveMovie} from '../../utils/storage';
+
 import { Genres } from '../../components/Genres/Genres';
+import { ModalLink } from '../../components/ModalLink/ModalLink';
 
 import { 
     Banner,
@@ -20,7 +23,6 @@ import {
     Rate, 
     Title 
 } from './Detail.styles';
-import { ModalLink } from '../../components/ModalLink/ModalLink';
 
 export function Detail() {
     const navigation = useNavigation();
@@ -28,6 +30,7 @@ export function Detail() {
 
     const [movie, setMovie] = useState({});
     const [openLink, setOpenLink] = useState(false);
+    const [favoritedMovie, setFavoritedMovie] = useState(false);
 
     useEffect(()=> {
         let isActive = true;
@@ -43,6 +46,8 @@ export function Detail() {
 
             if(isActive) {
                 setMovie(response.data);
+                const isFavorite = await hasMovie(response.data);
+                setFavoritedMovie(isFavorite);
             }
         }
         if(isActive) getMovie();
@@ -51,6 +56,18 @@ export function Detail() {
             isActive = false;
         } 
     },[]);
+
+    async function handleFavoriteMovie(movie) {
+        if(favoritedMovie) {
+            await deleteMovie(movie.id);
+            setFavoritedMovie(false);
+            alert('Filme removido da sua lista!');
+        }else{
+            await saveMovie('@primereact', movie);
+            setFavoritedMovie(true);
+            alert('Filme salvo na sua lista');
+        }
+    }
 
     return (
         <Container>
@@ -62,12 +79,21 @@ export function Detail() {
                         color={theme.color.white}
                     />
                 </HeaderButton>
-                <HeaderButton>
-                    <Feather
-                        name="bookmark"
-                        size={28}
-                        color={theme.color.white}
-                    />
+
+                <HeaderButton onPress={() => handleFavoriteMovie(movie)}>
+                    {favoritedMovie ? (
+                        <Ionicons
+                            name="bookmark"
+                            size={28}
+                            color={theme.color.white}
+                        />
+                    ) : (
+                        <Ionicons
+                            name="bookmark-outline"
+                            size={28}
+                            color={theme.color.white}
+                        />
+                    )}
                 </HeaderButton>
             </Header>
 
